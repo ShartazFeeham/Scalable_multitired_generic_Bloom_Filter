@@ -1,0 +1,46 @@
+public class BloomFilter <T> {
+
+    private final int size;
+    private final int sizeMultiplier;
+    private final double falsePositiveRatio;
+    private final boolean multiTier;
+    private final boolean rehash;
+
+    /**
+     * <p>
+     * A default constructor that comes with -
+     *     <li>Initial size: 10</li>
+     *     <li>Size multiplier: 2</li>
+     *     <li>False positive ratio: 0.1 or 10%</li>
+     *     <li>Multi tier: disabled & Rehash: enabled</li>
+     * </p>     */
+    public BloomFilter() {
+        this.size = 10;
+        this.sizeMultiplier = 2;
+        this.falsePositiveRatio = 0.1;
+        this.multiTier = false;
+        this.rehash = true;
+    }
+
+    /**
+     * @param multiTier boolean
+     * @param rehash boolean
+     */
+    public BloomFilter(int size, int sizeMultiplier, double falsePositiveRatio, boolean multiTier, boolean rehash) {
+        this.size = size;
+        this.sizeMultiplier = sizeMultiplier;
+        this.falsePositiveRatio = falsePositiveRatio;
+        this.multiTier = multiTier;
+        this.rehash = rehash;
+    }
+
+    /**
+     * Check if an item exists or not
+     * @param value T       value that you are searching for
+     * @return boolean      true if exists, false otherwise
+     */
+    public boolean ifExists(T value) {
+        return false;
+    }
+
+}
