@@ -1,11 +1,16 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class BloomFilter <T> {
 
-    private final int size;
-    private final int sizeMultiplier;
-    private final double falsePositiveRatio;
-    private final boolean multiTier;
-    private final boolean rehash;
-    private final boolean showLog;
+    private int bitMapSize;
+    private int sizeMultiplier;
+    private double falsePositiveRatio;
+    private boolean showLog;
+    private boolean multiTier;
+    private int maxBitMapSize;
+
+    private final List<boolean[]> bitMaps = new ArrayList<>();
 
     /**
      * <p>
@@ -15,44 +20,51 @@ public class BloomFilter <T> {
      *     <li>False positive ratio: 0.1 or 10%</li>
      *     <li>Multi tier: disabled & Rehash: enabled</li>
      *     <li>Show log: disabled</li>
-     * </p>     */
-    public BloomFilter() {
-        this.size = 10;
-        this.sizeMultiplier = 2;
-        this.falsePositiveRatio = 0.1;
-        this.multiTier = false;
-        this.rehash = true;
-        this.showLog = false;
-    }
-
-    /**
-     * @param initialSize         size of the bloom filter
-     * @param sizeMultiplier      size multiplier in case of over-crowding
-     * @param falsePositiveRatio  preferred false positive ratio
-     * @param multiTier           enable or multi tier bloom filter, *rehash is inversely related to this*
+     * </p>
      */
-    public BloomFilter(int initialSize, int sizeMultiplier, double falsePositiveRatio, boolean multiTier, boolean showLog) {
-        this.size = initialSize;
-        this.sizeMultiplier = sizeMultiplier;
-        this.falsePositiveRatio = falsePositiveRatio;
-        this.multiTier = multiTier;
-        rehash = !multiTier;
-        this.showLog = showLog;
+    public BloomFilter() {
+        initialize(10, 2, 0.1, 1_000_000, ScaleStrategy.REHASH, false);
     }
 
     /**
-     * @param initialSize               size of the bloom filter
+     * @param initialBitMapSize         size of the bloom filter bit map
+     * @param sizeMultiplier            size multiplier in case of over-crowding
+     * @param falsePositiveRatio        preferred false positive ratio
+     * @param maxBitMapSize             maximum size of the bloom filter bitmap
+     * @param scaleStrategy             enable or disable multi tier bloom filter, *rehash is inversely related to this*
+     */
+    public BloomFilter(int initialBitMapSize, int sizeMultiplier,
+                       double falsePositiveRatio, int maxBitMapSize,
+                       ScaleStrategy scaleStrategy, boolean showLog) {
+        initialize(initialBitMapSize, sizeMultiplier, falsePositiveRatio / 100.0, maxBitMapSize, scaleStrategy, showLog);
+    }
+
+    /**
+     * @param initialBitMapSize         size of the bloom filter bit map
      * @param sizeMultiplier            size multiplier in case of over-crowding
      * @param falsePositivePercentage   preferred false positive ratio
-     * @param multiTier                 enable or multi tier bloom filter, *rehash is inversely related to this*
+     * @param maxBitMapSize             maximum size of the bloom filter bitmap
+     * @param scaleStrategy             enable or disable multi tier bloom filter, *rehash is inversely related to this*
      */
-    public BloomFilter(int initialSize, int sizeMultiplier, int falsePositivePercentage, boolean multiTier, boolean showLog) {
-        this.size = initialSize;
+    public BloomFilter(int initialBitMapSize, int sizeMultiplier,
+                       int falsePositivePercentage, int maxBitMapSize,
+                       ScaleStrategy scaleStrategy, boolean showLog) {
+        initialize(initialBitMapSize, sizeMultiplier, falsePositivePercentage / 100.0, maxBitMapSize, scaleStrategy, showLog);
+    }
+
+    private void initialize(int initialBitMapSize, int sizeMultiplier,
+                            double falsePositiveRatio, int maxBitMapSize,
+                            ScaleStrategy scaleStrategy, boolean showLog) {
+        this.bitMapSize = initialBitMapSize;
         this.sizeMultiplier = sizeMultiplier;
-        this.falsePositiveRatio = falsePositivePercentage / 100.0;
-        this.multiTier = multiTier;
-        rehash = !multiTier;
+        this.falsePositiveRatio = falsePositiveRatio;
         this.showLog = showLog;
+        if (initialBitMapSize > maxBitMapSize) {
+            throw new IllegalArgumentException("Initial bitmap size cannot be greater than " + maxBitMapSize);
+        }
+        this.maxBitMapSize = maxBitMapSize;
+        multiTier = scaleStrategy == ScaleStrategy.MULTI_TIER;
+        bitMaps.add(new boolean[initialBitMapSize]);
     }
 
     /**
@@ -61,6 +73,16 @@ public class BloomFilter <T> {
      * @return boolean      true if exists, false otherwise
      */
     public boolean ifExists(T value) {
+        if (multiTier) {
+            return proceedWithMultiTier(value);
+        } else return proceedWithSingleTier(value);
+    }
+
+    private boolean proceedWithSingleTier(T value) {
+        return false;
+    }
+
+    private boolean proceedWithMultiTier(T value) {
         return false;
     }
 
@@ -68,5 +90,9 @@ public class BloomFilter <T> {
         if (showLog) {
             System.out.println(message);
         }
+    }
+
+    public enum ScaleStrategy {
+        REHASH, MULTI_TIER
     }
 }
