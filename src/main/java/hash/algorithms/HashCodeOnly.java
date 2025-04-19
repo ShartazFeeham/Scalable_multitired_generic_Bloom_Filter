@@ -11,7 +11,7 @@ public class HashCodeOnly<T> implements Hash<T> {
     }
 
     protected long cutSize(long hashValue, long limit) {
-        return hashValue % limit;
+        return Math.abs(hashValue % limit);
     }
 
 }

@@ -10,7 +10,7 @@ public abstract class AbstractBloomFilter <T> implements BloomFilter<T> {
 
     protected final double falsePositiveRatio;
     private final boolean showLog;
-    private final List<Hash<T>> algorithms = new ArrayList<>();
+    protected final List<Hash<T>> algorithms = new ArrayList<>();
 
     /**
      * Default constructor for AbstractBloomFilter.
@@ -56,13 +56,6 @@ public abstract class AbstractBloomFilter <T> implements BloomFilter<T> {
     abstract void addToBitMap(List<Long> setBits);
 
     /**
-     * Check if all bits are set
-     * @param setBits      list of bits to be checked
-     * @return boolean     true if all bits are set, false otherwise
-     */
-    abstract protected boolean isAllBitSet(List<Long> setBits);
-
-    /**
      * Scale up the bloom filter
      */
     abstract protected void scaleUp();
@@ -73,15 +66,12 @@ public abstract class AbstractBloomFilter <T> implements BloomFilter<T> {
      */
     abstract long getTargetBitmapSize();
 
-    @Override
-    public boolean contains(T value) {
-        log("Checking if value " + value.toString() + " is present in the bloom filter");
-        List<Long> setBits = getSetBits(value);
-        log("Set bits: " + setBits);
-        boolean allSet = isAllBitSet(setBits);
-        log("Bits set status: " + allSet);
-        return  allSet;
-    }
+    /**
+     * Get the set bits for the value
+     * @param value        value to be hashed
+     * @return List<Long>  list of set bits
+     */
+    abstract List<Long> getSetBits(T value);
 
     @Override
     public void add(T value) {
@@ -89,7 +79,7 @@ public abstract class AbstractBloomFilter <T> implements BloomFilter<T> {
             log("Value " + value.toString() + " is already present in the bloom filter");
             return;
         }
-        log("Adding value " + value.toString() + " to the bloom filter");
+        log("Trying to add value " + value.toString() + " to the bloom filter");
         if (isPlaceToAdd()) {
             List<Long> setBits = getSetBits(value);
             log("Set bits: " + setBits);
@@ -98,11 +88,8 @@ public abstract class AbstractBloomFilter <T> implements BloomFilter<T> {
         } else {
             log("Bloom filter is full, scaling up");
             scaleUp();
-            log("Bloom filter scaled up");
-            List<Long> setBits = getSetBits(value);
-            log("Set bits: " + setBits);
-            addToBitMap(setBits);
-            log("Value " + value.toString() + " added to the bloom filter");
+            log("Recursively adding value " + value.toString() + " to the bloom filter after scaling up");
+            add(value);
         }
     }
 
@@ -114,11 +101,5 @@ public abstract class AbstractBloomFilter <T> implements BloomFilter<T> {
         }
         log("Value " + value.toString() + " is " + (exists ? "already present" : "added") + " in the bloom filter");
         return exists;
-    }
-
-    protected List<Long> getSetBits(T value) {
-        return algorithms.stream()
-                .map(algorithm -> algorithm.hash(value, getTargetBitmapSize()))
-                .toList();
     }
 }
