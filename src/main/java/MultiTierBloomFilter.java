@@ -3,20 +3,20 @@ import java.util.List;
 
 public class MultiTierBloomFilter<T> extends AbstractBloomFilter<T> {
 
-    private final List<int[]> bitMaps = new ArrayList<>();
-    private final List<Integer> setBitsCount = new ArrayList<>();
+    protected final List<boolean[]> bitMaps = new ArrayList<>();
+    protected final List<Integer> setBitsCount = new ArrayList<>();
 
     public MultiTierBloomFilter() {
         super();
         // Setting first bitmap size to 1000
-        this.bitMaps.add(new int[1000]);
+        this.bitMaps.add(new boolean[1000]);
         this.setBitsCount.add(0);
     }
 
     public MultiTierBloomFilter(double falsePositiveRatio, boolean showLog) {
         super(falsePositiveRatio, showLog);
         // Setting first bitmap size to 1000
-        this.bitMaps.add(new int[1000]);
+        this.bitMaps.add(new boolean[1000]);
         this.setBitsCount.add(0);
     }
 
@@ -40,9 +40,9 @@ public class MultiTierBloomFilter<T> extends AbstractBloomFilter<T> {
         setBits.stream()
                 .map(Long::intValue)
                 .forEach(bit -> {
-                    int[] bitMap = bitMaps.getLast();
-                    if (bitMap[bit] == 0) {
-                        bitMap[bit] = 1;
+                    boolean[] bitMap = bitMaps.getLast();
+                    if (!bitMap[bit]) {
+                        bitMap[bit] = true;
                         setBitsCount.add(setBitsCount.removeLast() + 1);
                     }
                 });
@@ -51,7 +51,7 @@ public class MultiTierBloomFilter<T> extends AbstractBloomFilter<T> {
     @Override
     protected void scaleUp() {
         int newBitMapSize = determineNewBitMapSize();
-        int[] newBitMap = new int[newBitMapSize];
+        boolean[] newBitMap = new boolean[newBitMapSize];
         bitMaps.add(newBitMap);
         setBitsCount.add(0);
         log("New bitmap added in list. Size is " + newBitMap.length);
@@ -100,11 +100,11 @@ public class MultiTierBloomFilter<T> extends AbstractBloomFilter<T> {
 
     protected boolean checkForTier(int i, T value) {
         log("Checking for tier " + i);
-        int[] bitMap = bitMaps.get(i);
+        boolean[] bitMap = bitMaps.get(i);
         List<Long> setBits = getSetBits(value, bitMap.length);
         log("Set bits: " + setBits);
         for(Long bit : setBits) {
-            if (bitMap[bit.intValue()] == 0) {
+            if (!bitMap[bit.intValue()]) {
                 log("Bit " + bit + " is not set");
                 return false;
             }
