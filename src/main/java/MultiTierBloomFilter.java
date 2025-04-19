@@ -1,6 +1,13 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Bloom filter implementation that uses horizontal scaling to scale up the bitmap size. It can play with very large number of loads.
+ * Element limit: Until your RAM melt down
+ * False negative ratio limit: 0.00000000139699 (1 false negative in 715 million hits)
+ *
+ * @param <T> the type of elements to be stored in the bloom filter
+ */
 public class MultiTierBloomFilter<T> extends AbstractBloomFilter<T> {
 
     protected final List<boolean[]> bitMaps = new ArrayList<>();
